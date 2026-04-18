@@ -49,9 +49,15 @@ class JobInput:
         self.apply_chat_template = job.get("apply_chat_template", False)
         self.use_openai_format = job.get("use_openai_format", False)
         samp_param = job.get("sampling_params", {})
-        if "max_tokens" not in samp_param:
-            samp_param["max_tokens"] = 100
+
+        # Map OpenAI-style max_new_tokens → vLLM max_tokens
+        if "max_new_tokens" in samp_param and "max_tokens" not in samp_param:
+            samp_param["max_tokens"] = samp_param["max_new_tokens"]
+
+        # Do NOT force any default max_tokens
         self.sampling_params = SamplingParams(**samp_param)
+
+        
         # self.sampling_params = SamplingParams(max_tokens=100, **job.get("sampling_params", {}))
         self.request_id = random_uuid()
         batch_size_growth_factor = job.get("batch_size_growth_factor")
